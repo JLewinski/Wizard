@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:Wizard.Mobile.ViewModels"
+             xmlns:models="clr-namespace:Wizard.Models;assembly=Wizard"
+             x:Class="Wizard.Mobile.MainPage"
+             x:Name="mainPage">
+    <ContentPage.BindingContext>
+        <viewModels:GameViewModel/>
+    </ContentPage.BindingContext>
+    <StackLayout>
+        <StackLayout Orientation="Horizontal">
+            <Button Command="{Binding NewPlayerCommand}" Text="Add Player" IsVisible="{Binding GameNotStarted}" IsEnabled="{Binding GameNotStarted}"/>
+            <Button Command="{Binding ClearPlayersCommand}" Text="Clear Players" IsVisible="{Binding GameNotStarted}" IsEnabled="{Binding GameNotStarted}"/>
+            <Button Text="Start" Command="{Binding NextRoundCommand}" IsVisible="{Binding GameNotStarted}"/>
+            <Button Command="{Binding NewGameCommand}" Text="New Game" IsVisible="{Binding GameStarted}"/>
+            <Button Text="Previous" Command="{Binding PreviousRoundCommand}" IsVisible="{Binding GameStarted}"/>
+            <Frame BackgroundColor="#2196F3" Padding="14" CornerRadius="0" IsVisible="{Binding GameStarted}">
+                <Label HorizontalTextAlignment="Center" TextColor="White" FontSize="16" Text="{Binding CurrentRound.RoundNumber}"/>
+            </Frame>
+            <Button Text="Next" Command="{Binding NextRoundCommand}" IsVisible="{Binding GameStarted}"/>
+        </StackLayout>
+        <StackLayout Orientation="Horizontal">
+        </StackLayout>
+        <CollectionView ItemsSource="{Binding CurrentRound.Results}" IsVisible="{Binding GameStarted}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0" Text="{Binding PlayerName}"/>
+                        <Entry Grid.Column="1" Text="{Binding Bet}"/>
+                        <Entry Grid.Column="2" Text="{Binding Result}"/>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        <CollectionView ItemsSource="{Binding Players}" IsVisible="{Binding ScoresVisible}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Entry Text="{Binding Name}" Grid.Column="0" IsReadOnly="{Binding BindingContext.GameStarted, Source={x:Reference mainPage}}"/>
+                        <Frame Grid.Column="1" BackgroundColor="#2196F3" Padding="14" CornerRadius="0">
+                            <Label HorizontalTextAlignment="Center" TextColor="White" FontSize="16" Text="{Binding Points}" />
+                        </Frame>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </StackLayout>
+</ContentPage>

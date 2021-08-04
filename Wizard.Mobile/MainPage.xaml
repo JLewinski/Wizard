@@ -2,7 +2,6 @@
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewModels="clr-namespace:Wizard.Mobile.ViewModels"
-             xmlns:models="clr-namespace:Wizard.Models;assembly=Wizard"
              x:Class="Wizard.Mobile.MainPage"
              x:Name="mainPage">
     <ContentPage.BindingContext>
@@ -38,6 +37,16 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+        <Grid IsVisible="{Binding GameStarted}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Label Grid.Column="0" Text="Total"/>
+            <Entry Grid.Column="1" Text="{Binding TotalBid}" IsReadOnly="True"/>
+            <Entry Grid.Column="2" Text="{Binding TotalResult}" IsReadOnly="True"/>
+        </Grid>
         <CollectionView ItemsSource="{Binding Players}" IsVisible="{Binding ScoresVisible}">
             <CollectionView.ItemTemplate>
                 <DataTemplate>

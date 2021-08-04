@@ -62,7 +62,7 @@ namespace Wizard.Mobile.ViewModels
             {
                 if (Rounds.Count <= roundNumber)
                 {
-                    Rounds.Add(new RoundViewModel(Players, roundNumber + 1));
+                    Rounds.Add(new RoundViewModel(Players, roundNumber + 1, this));
                 }
                 CurrentRound = _rounds[roundNumber];
                 GameStarted = true;
@@ -97,15 +97,15 @@ namespace Wizard.Mobile.ViewModels
             {
                 var games = db.GetCollection<Game>(nameof(Game));
                 var game = games.Query().FirstOrDefault();
-                if(game != null)
+                if (game != null)
                 {
                     foreach (var player in game.Players)
                     {
                         Players.Add(player);
                     }
-                    if(game.Rounds.Any(x => x.Results.Sum(y => y.Result) == x.RoundNumber))
+                    if (game.Rounds.Any(x => x.Results.Sum(y => y.Result) == x.RoundNumber))
                     {
-                        foreach (var round in game.Rounds.OrderBy(x => x.RoundNumber))
+                        foreach (var round in game.Rounds.OrderBy(x => x.RoundNumber).Select(x => new RoundViewModel(x, this)))
                         {
                             Rounds.Add(round);
                         }
@@ -132,13 +132,13 @@ namespace Wizard.Mobile.ViewModels
         public void CalculateScores()
         {
             bool changed = false;
-            foreach(var player in Players)
+            foreach (var player in Players)
             {
                 var score = 0;
-                
-                foreach(var result in Rounds.Where(x => x.Results.Any(y => y.PlayerName == player.Name) && x.Results.Sum(y => y.Result) == x.RoundNumber).Select(x => x.Results.FirstOrDefault(y => y.PlayerName == player.Name)))
+
+                foreach (var result in Rounds.Where(x => x.Results.Any(y => y.PlayerName == player.Name) && x.Results.Sum(y => y.Result) == x.RoundNumber).Select(x => x.Results.FirstOrDefault(y => y.PlayerName == player.Name)))
                 {
-                    if(result.Bet == result.Result)
+                    if (result.Bet == result.Result)
                     {
                         score += 20 + (result.Bet * 10);
                     }
@@ -164,16 +164,28 @@ namespace Wizard.Mobile.ViewModels
         private IRound _currentRound;
         public IRound CurrentRound { get => _currentRound; set => SetProperty(ref _currentRound, value); }
 
+        private int _totalBid;
+        public int TotalBid { get => _totalBid; private set => SetProperty(ref _totalBid, value); }
+
+        private int _totalResult;
+        public int TotalResult { get => _totalResult; private set => SetProperty(ref _totalResult, value); }
+
+        public bool CanGoNextRound => !_gameStarted || TotalResult == CurrentRound.RoundNumber;
+
         private ObservableCollection<IPlayer> _players;
         public ICollection<IPlayer> Players { get => _players; set => SetProperty(ref _players, new ObservableCollection<IPlayer>(value.Select(x => new PlayerViewModel(x)))); }
 
         private ObservableCollection<IRound> _rounds;
-        public ICollection<IRound> Rounds { get => _rounds; set => SetProperty(ref _rounds, new ObservableCollection<IRound>(value.Select(x => new RoundViewModel(x)))); }
+        public ICollection<IRound> Rounds { get => _rounds; set => SetProperty(ref _rounds, new ObservableCollection<IRound>(value.Select(x => new RoundViewModel(x, this)))); }
 
         public int NumRounds => (Players?.Count ?? 0) / 60;
 
         public int Id { get; set; } = 1;
-        
+
+
+        public void UpdateTotalBets() => TotalBid = CurrentRound?.Results.Sum(x => x.Bet) ?? 0;
+
+        public void UpdateTotalResults() => TotalResult = CurrentRound?.Results.Sum(x => x.Result) ?? 0;
     }
 
     public class PlayerViewModel : BindableBase, IPlayer
@@ -196,17 +208,17 @@ namespace Wizard.Mobile.ViewModels
     {
         public RoundViewModel() { }
 
-        public RoundViewModel(IEnumerable<IPlayer> players, int roundNumber)
+        public RoundViewModel(IEnumerable<IPlayer> players, int roundNumber, GameViewModel game)
         {
             RoundNumber = roundNumber;
-            Results = new ObservableCollection<IRoundResult>(players.Select(x => new RoundResultViewModel { PlayerName = x.Name }));
+            Results = new ObservableCollection<IRoundResult>(players.Select(x => new RoundResultViewModel(x.Name, game)));
         }
 
-        public RoundViewModel(IRound other)
+        public RoundViewModel(IRound other, GameViewModel game)
         {
             RoundNumber = other.RoundNumber;
             Suit = other.Suit;
-            Results = new ObservableCollection<IRoundResult>(other.Results.Select(x => new RoundResultViewModel(x)));
+            Results = new ObservableCollection<IRoundResult>(other.Results.Select(x => new RoundResultViewModel(x, game)));
         }
 
         private Suit _suit;
@@ -218,21 +230,44 @@ namespace Wizard.Mobile.ViewModels
     public class RoundResultViewModel : BindableBase, IRoundResult
     {
         public RoundResultViewModel() { }
-        public RoundResultViewModel(IRoundResult other)
+        public RoundResultViewModel(IRoundResult other, GameViewModel game)
         {
             _playerName = other.PlayerName;
             _bet = other.Bet;
             _result = other.Result;
+            Game = game;
         }
+        public RoundResultViewModel(string playerName, GameViewModel game)
+        {
+            PlayerName = playerName;
+            Game = game;
+        }
+
+        public Delegate UpdateTotalBets { get; set; }
+        public Delegate UpdateTotalResults { get; set; }
 
         private string _playerName;
         public string PlayerName { get => _playerName; set => SetProperty(ref _playerName, value); }
 
         private int _bet;
-        public int Bet { get => _bet; set => SetProperty(ref _bet, value); }
+        public int Bet
+        {
+            get => _bet; set
+            {
+                SetProperty(ref _bet, value);
+                Game.UpdateTotalBets();
+            }
+        }
 
         private int _result;
-        public int Result { get => _result; set => SetProperty(ref _result, value); }
+        public int Result { get => _result; set
+            {
+                SetProperty(ref _result, value);
+                Game.UpdateTotalResults();
+            }
+        }
+
+        public GameViewModel Game { get; set; }
     }
 
     public class BindableBase : INotifyPropertyChanged

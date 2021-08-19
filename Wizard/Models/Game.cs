@@ -1,8 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Wizard.Models
 {
+    public static class GameExtensions
+    {
+        public static Game ToPoco(this IGame game) => game is Game poco ? poco : new Game(game);
+        //public static PlayerPoco ToPoco(this IPlayer player) => player is PlayerPoco poco ? poco : new PlayerPoco(player);
+        //public static RoundPoco ToPoco(this IRound player) => player is RoundPoco poco ? poco : new RoundPoco(player);
+        //public static RoundResultPoco ToPoco(this IRoundResult player) => player is RoundResultPoco poco ? poco : new RoundResultPoco(player);
+    }
+
     public class Game : IGame
     {
         public Game() { }
@@ -47,20 +56,7 @@ namespace Wizard.Models
         int RoundNumber { get; set; }
         Suit Suit { get; set; }
 
-        ICollection<IRoundResult> Results { get; set; }
-    }
-
-    public class Round : IRoundResult
-    {
-        public Round() { }
-        public Round(IRoundResult other)
-        {
-            PlayerName = other.PlayerName;
-        }
-
-        public string PlayerName { get; set; }
-        public int Bet { get; set; }
-        public int Result { get; set; }
+        Collection<IRoundResult> Results { get; set; }
     }
 
     public interface IRoundResult
@@ -68,6 +64,7 @@ namespace Wizard.Models
         string PlayerName { get; set; }
         int Bet { get; set; }
         int Result { get; set; }
+        bool IsDealer { get; set; }
     }
 
     

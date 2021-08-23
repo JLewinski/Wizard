@@ -18,9 +18,14 @@
     <None Remove="ViewModels\" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="ViewModels\" />
+    <ProjectReference Include="..\Wizard\Wizard.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Wizard\Wizard.csproj" />
+    <EmbeddedResource Update="Pages\CreationPage.xaml">
+      <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Pages\HomePage.xaml">
+      <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

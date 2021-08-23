@@ -1,71 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace Wizard.Models
 {
-    public static class GameExtensions
-    {
-        public static Game ToPoco(this IGame game) => game is Game poco ? poco : new Game(game);
-        //public static PlayerPoco ToPoco(this IPlayer player) => player is PlayerPoco poco ? poco : new PlayerPoco(player);
-        //public static RoundPoco ToPoco(this IRound player) => player is RoundPoco poco ? poco : new RoundPoco(player);
-        //public static RoundResultPoco ToPoco(this IRoundResult player) => player is RoundResultPoco poco ? poco : new RoundResultPoco(player);
-    }
-
-    public class Game : IGame
+    public class Game
     {
         public Game() { }
-        public Game(IGame other)
+
+        public Game(int id, string name, IEnumerable<IPlayer> players, List<Suit> suits)
         {
-            Id = other.Id;
-            Players = other.Players;
-            Rounds = other.Rounds;
+            Id = id;
+            Name = name;
+            Players = players.Select(x => x.ToPoco()).ToList();
+            Suits = suits;
         }
+
         public int Id { get; set; }
 
-        private List<IPlayer> _players;
-        public ICollection<IPlayer> Players { get => _players; set => _players = new List<IPlayer>(value); }
+        public string Name { get; set; }
 
-        private List<IRound> _rounds;
-        public ICollection<IRound> Rounds { get => _rounds; set => _rounds = new List<IRound>(value); }
+        public List<Player> Players { get; set; }
+
+        public List<Suit> Suits { get; set; } = new List<Suit>();
+
+        public DateTime LastUpdated { get; set; }
     }
 
-    public interface IGame
+    public class Player
     {
-        int Id { get; set;  }
-        ICollection<IPlayer> Players { get; set;  }
-        ICollection<IRound> Rounds { get; set;  }
+        public Player() { }
+
+        public string Name { get; set; }
+        public List<RoundResult> Rounds { get; set; } = new List<RoundResult>();
     }
-
-    public interface IPlayer
-    {
-        string Name { get; set; }
-        int Points { get; set; }
-    }
-
-    public enum Suit
-    {
-        Hearts,
-        Spades,
-        Diamonds,
-        Clubs
-    }
-
-    public interface IRound
-    {
-        int RoundNumber { get; set; }
-        Suit Suit { get; set; }
-
-        Collection<IRoundResult> Results { get; set; }
-    }
-
-    public interface IRoundResult
-    {
-        string PlayerName { get; set; }
-        int Bet { get; set; }
-        int Result { get; set; }
-        bool IsDealer { get; set; }
-    }
-
-    
 }

@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:Wizard.Mobile.ViewModels"
+             x:Class="Wizard.Mobile.Pages.HomePage">
+    <ContentPage.BindingContext>
+        <viewModels:HomeViewModel x:Name="vm"/>
+    </ContentPage.BindingContext>
+    <NavigationPage.TitleView>
+        <Label Grid.Row="0" Text="Wizard Score Tracker"
+                VerticalOptions="CenterAndExpand" 
+                HorizontalOptions="CenterAndExpand" HeightRequest="44" WidthRequest="300"/>
+    </NavigationPage.TitleView>
+    <ContentPage.Content>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            
+            <CollectionView Grid.Row="0" ItemsSource="{Binding Games}" SelectedItem="{Binding SelectedSummary}" SelectionMode="Single">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Text="{Binding LastUpdated}"/>
+                            <Label Grid.Column="1" Text="{Binding IsFinished}"/>
+                            <Button Grid.Column="2" Text="Open" Command="{Binding LoadCommand, Source={x:Reference vm}}" CommandParameter="{Binding Id}"/>
+                            <Button Grid.Column="3" Text="Delete" Command="{Binding DeleteCommand, Source={x:Reference vm}}" CommandParameter="{Binding Id}"/>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <StackLayout Grid.Row="1" Orientation="Horizontal" HorizontalOptions="FillAndExpand">
+                <Button Text="Refresh" Command="{Binding RefreshCommand}" HorizontalOptions="FillAndExpand"/>
+                <Button Text="New Game" Command="{Binding NewGameCommand}" HorizontalOptions="FillAndExpand"/>
+            </StackLayout>
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>

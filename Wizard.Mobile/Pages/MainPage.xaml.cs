@@ -6,13 +6,15 @@ using System.Text;
 using System.Threading.Tasks;
 using Xamarin.Forms;
 
-namespace Wizard.Mobile
+namespace Wizard.Mobile.Pages
 {
     public partial class MainPage : ContentPage
     {
-        public MainPage()
+        public MainPage(int id)
         {
             InitializeComponent();
+            var vm = BindingContext as ViewModels.GameViewModel;
+            vm.Load(id);
         }
     }
 }

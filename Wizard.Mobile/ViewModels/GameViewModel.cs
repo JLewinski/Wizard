@@ -1,9 +1,8 @@
 ﻿using LiteDB;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Wizard.Models;
 using Xamarin.Forms;
@@ -12,59 +11,51 @@ namespace Wizard.Mobile.ViewModels
 {
     public class GameViewModel : BindableBase, IGame
     {
-        private string _dbPath;
-        private int _previousRound = 0;
-        public IReadOnlyList<Suit> Suits = new List<Suit> { Suit.Spades, Suit.Diamonds, Suit.Clubs, Suit.Hearts };
+        private readonly string _dbPath;
+        private readonly Services.DataService _dataService;
+        public readonly IReadOnlyList<Suit> SuitChoices = (Enum.GetValues(typeof(Suit)) as Suit[]).ToList();
+        private readonly List<CurrentRoundViewModel> _rounds = new List<CurrentRoundViewModel>();
+        
+        private int id;
 
         public GameViewModel()
         {
             _dbPath = DependencyService.Get<IDataBaseAccess>().DatabasePath();
-            _players = new ObservableCollection<IPlayer>();
-            _rounds = new ObservableCollection<IRound>();
-            Load();
-
-            _nextRoundCommand = new Command(NextRound);
-            _previousRoundCommand = new Command(PreviousRound);
-            _newGameCommand = new Command(Clear);
-            _saveCommand = new Command(Save);
-            _newPlayerCommand = new Command(() =>
+            _dataService = new Services.DataService(_dbPath);
+            NextRoundCommand = new Command(() => NextRound());
+            PreviousRoundCommand = new Command(PreviousRound);
+            NewGameCommand = new Command(async () =>
+            {
+                var navPage = Application.Current.MainPage as NavigationPage;
+                var popedPage = await navPage.PopAsync();
+            });
+            NewPlayerCommand = new Command(() =>
             {
                 if (Players.Count < 6)
                 {
                     Players.Add(new PlayerViewModel());
                 }
             });
-            _clearPlayersCommand = new Command(() => Players.Clear());
+            ClearPlayersCommand = new Command(() => Players.Clear());
         }
 
-        private readonly ICommand _nextRoundCommand;
-        [BsonIgnore]
-        public ICommand NextRoundCommand => _nextRoundCommand;
+        #region Commands 
 
-        private readonly ICommand _previousRoundCommand;
-        [BsonIgnore]
-        public ICommand PreviousRoundCommand => _previousRoundCommand;
+        public ICommand NextRoundCommand { get; }
+        public ICommand PreviousRoundCommand { get; }
+        public ICommand SaveCommand { get; }
+        public ICommand NewGameCommand { get; }
+        public ICommand NewPlayerCommand { get; }
+        public ICommand ClearPlayersCommand { get; }
 
-        private readonly ICommand _saveCommand;
-        [BsonIgnore]
-        public ICommand SaveCommand => _saveCommand;
+        #endregion Commands
 
-        private readonly ICommand _newGameCommand;
-        [BsonIgnore]
-        public ICommand NewGameCommand => _newGameCommand;
+        #region Functional Methods
 
-        private readonly ICommand _newPlayerCommand;
-        [BsonIgnore]
-        public ICommand NewPlayerCommand => _newPlayerCommand;
-
-        private readonly ICommand _clearPlayersCommand;
-        [BsonIgnore]
-        public ICommand ClearPlayersCommand => _clearPlayersCommand;
-
-        public void NextRound()
+        public void NextRound(bool save = true)
         {
             var roundNumber = CurrentRound?.RoundNumber ?? 0;
-            if (roundNumber != 60 / Players.Count)
+            if (roundNumber != 60 / PlayerViewModels.Count)
             {
                 if(roundNumber > 0 && roundNumber != TotalResult)
                 {
@@ -72,16 +63,24 @@ namespace Wizard.Mobile.ViewModels
                     return;
                 }
 
-                if (Rounds.Count <= roundNumber)
+                foreach(var player in PlayerViewModels)
                 {
-                    Rounds.Add(new RoundViewModel(Players, roundNumber + 1, this));
+                    if(player.RoundViewModels.Count <= roundNumber)
+                    {
+                        player.AddRound();
+                    }
                 }
-                CurrentRound = _rounds[roundNumber];
-                GameStarted = true;
+
+                roundNumber++;
+
+                CurrentRound = new CurrentRoundViewModel(roundNumber, PlayerViewModels);
+                _rounds.Add(CurrentRound);
             }
-            _previousRound = roundNumber;
-            CalculateScores();
             UpdateAll();
+            if (save)
+            {
+                _dataService.Save(this);
+            }
         }
 
         public void PreviousRound()
@@ -90,106 +89,52 @@ namespace Wizard.Mobile.ViewModels
             {
                 return;
             }
+
             CurrentRound = _rounds[CurrentRound.RoundNumber - 2];
             UpdateAll();
         }
 
-        public void Clear()
+        public void Load(Game game)
         {
-            _rounds.Clear();
-            GameStarted = false;
-            ScoresVisible = true;
-            _previousRound = 0;
-            CurrentRound = null;
-            foreach(var player in Players)
+            if (game != null)
             {
-                player.Points = 0;
-            }
-        }
-
-        public void Load()
-        {
-            Clear();
-            using (var db = new LiteDatabase(_dbPath))
-            {
-                var games = db.GetCollection<Game>(nameof(GameViewModel));
-                var game = games.Query().FirstOrDefault();
-                if (game != null)
+                id = game.Id;
+                foreach (var player in game.Players)
                 {
-                    foreach (var player in game.Players)
-                    {
-                        Players.Add(player);
-                    }
-                    if (game.Rounds.Any(x => x.Results.Sum(y => y.Result) == x.RoundNumber))
-                    {
-                        foreach (var round in game.Rounds.OrderBy(x => x.RoundNumber).Select(x => new RoundViewModel(x, this)))
-                        {
-                            Rounds.Add(round);
-                        }
-                        GameStarted = true;
-                        CurrentRound = Rounds.Last();
-                    }
+                    PlayerViewModels.Add(new PlayerViewModel(player, this));
+                }
+                var roundNumber = PlayerViewModels.Any(x => x.RoundViewModels.Any(y => y.Result > 0)) ? PlayerViewModels[0].RoundViewModels.Count - 1 : 0;
+                for (int i = 0; i < roundNumber; i++)
+                {
+                    _rounds.Add(new CurrentRoundViewModel(i + 1, PlayerViewModels));
+                }
+
+                if (roundNumber > 0)
+                {
+                    CurrentRound = new CurrentRoundViewModel(roundNumber, PlayerViewModels);
+                    UpdateAll();
+                }
+                else
+                {
+                    NextRound(false);
                 }
             }
         }
 
-        public void Save()
+        public void Load(int id)
         {
-            using (var db = new LiteDB.LiteDatabase(_dbPath))
-            {
-                var games = db.GetCollection<GameViewModel>(nameof(GameViewModel));
-                if (!games.Update(this))
-                {
-                    games.Insert(this);
-                }
-            }
+            var game = _dataService.GetGame(id);
+            Load(game);
         }
 
-        public void CalculateScores()
-        {
-            bool changed = false;
-            foreach (var player in Players)
-            {
-                var score = 0;
+        #endregion Functional Methods
 
-                foreach (var result in Rounds.Where(x => x.Results.Any(y => y.PlayerName == player.Name) && x.Results.Sum(y => y.Result) == x.RoundNumber).Select(x => x.Results.FirstOrDefault(y => y.PlayerName == player.Name)))
-                {
-                    if (result.Bet == result.Result)
-                    {
-                        score += 20 + (result.Bet * 10);
-                    }
-                    else
-                    {
-                        score -= 10 * System.Math.Abs(result.Bet - result.Result);
-                    }
-                }
-                changed = changed || player.Points != score;
-                player.Points = score;
-            }
-            Save();
-        }
-
-        private bool _gameStarted = false;
-        [BsonIgnore]
-        public bool GameStarted { get => _gameStarted; set { SetProperty(ref _gameStarted, value); RaisePropertyChanged(nameof(GameNotStarted)); } }
-
-        [BsonIgnore]
-        public bool GameNotStarted => !_gameStarted;
-
-        private bool _scoresVisible = true;
-        [BsonIgnore]
-        public bool ScoresVisible { get => _scoresVisible; set => SetProperty(ref _scoresVisible, value); }
-
-        private IRound _currentRound;
-        [BsonIgnore]
-        public IRound CurrentRound { get => _currentRound; set => SetProperty(ref _currentRound, value); }
+        #region View Properties
 
         private int _totalBid;
-        [BsonIgnore]
         public int TotalBid { get => _totalBid; private set => SetProperty(ref _totalBid, value); }
 
         private int _totalResult;
-        [BsonIgnore]
         public int TotalResult { get => _totalResult;
             private set
             {
@@ -198,54 +143,48 @@ namespace Wizard.Mobile.ViewModels
                     RaisePropertyChanged(nameof(TotalStatusColor));
                     if (CanGoNextRound)
                     {
-                        foreach(var p in CurrentRound.Results)
+                        foreach(var vm in CurrentRound.Scores)
                         {
-                            var vm = p as RoundResultViewModel;
-                            vm.ShowColor();
+                            vm.UpdateView();
                         }
                     }
                 }
             }
         }
 
-        private const double RBG = 255;
+        public Color TotalStatusColor => CanGoNextRound ? Color.Green : Color.Transparent;
 
-        private static Color ColorHelperRGB(int colorHex)
+        public bool CanGoNextRound => CurrentRound == null || TotalResult == CurrentRound.RoundNumber;
+
+        private CurrentRoundViewModel _currentRound;
+        public CurrentRoundViewModel CurrentRound { get => _currentRound; set => SetProperty(ref _currentRound, value); }
+
+        public ObservableCollection<PlayerViewModel> PlayerViewModels { get; set; } = new ObservableCollection<PlayerViewModel>();
+
+        #endregion View Properties
+
+        #region Implement IGame
+
+        private string _name;
+        public string Name { get => _name; set => SetProperty(ref _name, value); }
+
+        public ICollection<IPlayer> Players => PlayerViewModels.Cast<IPlayer>().ToList();
+
+        public ICollection<Suit> Suits { get; set; } = new ObservableCollection<Suit>();
+
+        public Game ToPoco()
         {
-            double b = (byte)colorHex / RBG;
-            double g = (byte)(colorHex >> 08) / RBG;
-            double r = (byte)(colorHex >> 16) / RBG;
-
-            return new Color(r, g, b);
+            return new Game()
+            {
+                Id = id,
+                Name = Name,
+                Players = Players.Select(x => x.ToPoco()).ToList()
+            };
         }
 
-        private static Color ColorHelperRGBA(int colorHex)
-        {
-            double a = (byte)colorHex / RBG;
-            double b = (byte)(colorHex >> 08) / RBG;
-            double g = (byte)(colorHex >> 16) / RBG;
-            double r = (byte)(colorHex >> 24) / RBG;
+        #endregion Implement IGame
 
-            return new Color(r, g, b, a);
-        }
-
-        public static readonly Color DEFAULT_COLOR = ColorHelperRGB(0x2196F3);
-
-        [BsonIgnore]
-        public Color TotalStatusColor => CanGoNextRound ? Color.Green : DEFAULT_COLOR;
-
-        [BsonIgnore]
-        public bool CanGoNextRound => !_gameStarted || TotalResult == CurrentRound.RoundNumber;
-
-        private ObservableCollection<IPlayer> _players;
-        public ICollection<IPlayer> Players { get => _players; set => SetProperty(ref _players, new ObservableCollection<IPlayer>(value.Select(x => new PlayerViewModel(x)))); }
-
-        private ObservableCollection<IRound> _rounds;
-        public ICollection<IRound> Rounds { get => _rounds; set => SetProperty(ref _rounds, new ObservableCollection<IRound>(value.Select(x => new RoundViewModel(x, this)))); }
-
-        public int NumRounds => (Players?.Count ?? 0) / 60;
-
-        public int Id { get; set; } = 1;
+        #region View Methods
 
         public void UpdateAll()
         {
@@ -254,139 +193,27 @@ namespace Wizard.Mobile.ViewModels
             RaisePropertyChanged(nameof(TotalStatusColor));
         }
 
-        public void UpdateTotalBets() => TotalBid = CurrentRound?.Results.Sum(x => x.Bet) ?? 0;
+        public void UpdateTotalBets() => TotalBid = PlayerViewModels.Sum(x => x.RoundViewModels[CurrentRound.RoundNumber - 1].Bet);
 
-        public void UpdateTotalResults() => TotalResult = CurrentRound?.Results.Sum(x => x.Result) ?? 0;
+        public void UpdateTotalResults() => TotalResult = PlayerViewModels.Sum(x => x.RoundViewModels[CurrentRound.RoundNumber - 1].Result);
+
+        #endregion View Methods
     }
 
-    public class PlayerViewModel : BindableBase, IPlayer
+    public class CurrentRoundViewModel
     {
-        public PlayerViewModel() { }
-        public PlayerViewModel(IPlayer other)
-        {
-            _name = other.Name;
-            _points = other.Points;
-        }
+        public int RoundNumber { get; }
+        public IReadOnlyList<RoundResultViewModel> Scores { get; }
 
-        private string _name;
-        public string Name { get => _name; set => SetProperty(ref _name, value); }
-
-        private int _points;
-        public int Points { get => _points; set => SetProperty(ref _points, value); }
-    }
-
-    public class RoundViewModel : BindableBase, IRound
-    {
-        public RoundViewModel() { }
-
-        public RoundViewModel(IEnumerable<IPlayer> players, int roundNumber, GameViewModel game)
+        public CurrentRoundViewModel(int roundNumber, ICollection<PlayerViewModel> players)
         {
             RoundNumber = roundNumber;
-            Results = new ObservableCollection<IRoundResult>(players.Select(x => new RoundResultViewModel(x.Name, game)));
-            Results[(RoundNumber - 1) % Results.Count].IsDealer = true;
-        }
 
-        public RoundViewModel(IRound other, GameViewModel game)
-        {
-            RoundNumber = other.RoundNumber;
-            Suit = other.Suit;
-            Results = new ObservableCollection<IRoundResult>(other.Results.Select(x => new RoundResultViewModel(x, game)));
-            Results[(RoundNumber - 1) % Results.Count].IsDealer = true;
-        }
-
-        private Suit _suit;
-        public Suit Suit { get => _suit; set => SetProperty(ref _suit, value); }
-        public int RoundNumber { get; set; }
-        public Collection<IRoundResult> Results { get; set; }
-    }
-
-    public class RoundResultViewModel : BindableBase, IRoundResult
-    {
-        public RoundResultViewModel() { }
-        public RoundResultViewModel(IRoundResult other, GameViewModel game)
-        {
-            _playerName = other.PlayerName;
-            _bet = other.Bet;
-            _result = other.Result;
-            _game = game;
-        }
-        public RoundResultViewModel(string playerName, GameViewModel game)
-        {
-            PlayerName = playerName;
-            _game = game;
-        }
-
-        private string _playerName;
-        public string PlayerName { get => _playerName; set => SetProperty(ref _playerName, value); }
-
-        private int _bet;
-        public int Bet
-        {
-            get => _bet; set
+            Scores = players.Select(x => x.RoundViewModels[roundNumber - 1]).ToList();
+            if(!Scores.Any(x => x.IsDealer))
             {
-                if (SetProperty(ref _bet, value))
-                {
-                    _game?.UpdateTotalBets();
-                }
+                Scores[(roundNumber - 1) % Scores.Count].IsDealer = true;
             }
-        }
-
-        private int _result;
-        public int Result
-        {
-            get => _result; set
-            {
-                if (SetProperty(ref _result, value))
-                {
-                    _game?.UpdateTotalResults();
-                }
-            }
-        }
-
-        private bool isDealer = false;
-        public bool IsDealer
-        {
-            get => isDealer;
-            set
-            {
-                if(SetProperty(ref isDealer, value))
-                {
-                    RaisePropertyChanged(nameof(NameColor));
-                }
-            }
-        }
-
-        [BsonIgnore]
-        public Color NameColor => isDealer ? GameViewModel.DEFAULT_COLOR : Color.Default;
-        public Color NameTextColor => isDealer ? Color.White : Color.Default;
-
-        public void ShowColor() => RaisePropertyChanged(nameof(ResultColor));
-
-        [BsonIgnore]
-        public Color ResultColor => !_game.CanGoNextRound ? Color.Default : _bet == _result ? Color.Green : Color.Red;
-
-        private readonly GameViewModel _game;
-    }
-
-    public class BindableBase : INotifyPropertyChanged
-    {
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected bool SetProperty<T>(ref T property, T value, [CallerMemberName] string propertyName = null)
-        {
-            if (property == null || !property.Equals(value))
-            {
-                property = value;
-                RaisePropertyChanged(propertyName);
-                return true;
-            }
-            return false;
-        }
-
-        protected void RaisePropertyChanged(string propertyName)
-        {
-            var args = new PropertyChangedEventArgs(propertyName);
-            PropertyChanged?.Invoke(this, args);
         }
     }
 }

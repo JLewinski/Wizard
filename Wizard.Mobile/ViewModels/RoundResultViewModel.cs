@@ -29,7 +29,7 @@ namespace Wizard.Mobile.ViewModels
 
         public Color NameTextColor => isDealer ? Color.White : Color.Default;
 
-        public Color ResultColor => !_game.CanGoNextRound ? Color.Default : bet == result ? Color.Green : Color.Red;
+        public Color ResultColor => !_game.CanGoNextRound ? Color.Default : bet == result ? ColorHelper.SUCCESS_GREEN : ColorHelper.DANGER_RED;
 
         public void UpdateView()
         {

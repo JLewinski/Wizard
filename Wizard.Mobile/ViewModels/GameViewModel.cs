@@ -152,7 +152,7 @@ namespace Wizard.Mobile.ViewModels
             }
         }
 
-        public Color TotalStatusColor => CanGoNextRound ? Color.Green : Color.Transparent;
+        public Color TotalStatusColor => CanGoNextRound ? ColorHelper.SUCCESS_GREEN : Color.Transparent;
 
         public bool CanGoNextRound => CurrentRound == null || TotalResult == CurrentRound.RoundNumber;
 
@@ -202,12 +202,14 @@ namespace Wizard.Mobile.ViewModels
 
     public class CurrentRoundViewModel
     {
+        public string RoundText { get; }
         public int RoundNumber { get; }
         public IReadOnlyList<RoundResultViewModel> Scores { get; }
 
         public CurrentRoundViewModel(int roundNumber, ICollection<PlayerViewModel> players)
         {
             RoundNumber = roundNumber;
+            RoundText = $"{roundNumber}/{60 / players.Count}";
 
             Scores = players.Select(x => x.RoundViewModels[roundNumber - 1]).ToList();
             if(!Scores.Any(x => x.IsDealer))

@@ -26,5 +26,7 @@ namespace Wizard.Mobile.ViewModels
         }
 
         public static readonly Color DEFAULT_COLOR = ColorHelperRGB(0x2196F3);
+        public static readonly Color DANGER_RED = ColorHelperRGB(0xB0170E);
+        public static readonly Color SUCCESS_GREEN = ColorHelperRGB(0x429E3B);
     }
 }

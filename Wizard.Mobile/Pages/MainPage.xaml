@@ -11,7 +11,7 @@
         <StackLayout Orientation="Horizontal" HeightRequest="50" WidthRequest="300">
             <Button Text="Previous" Command="{Binding PreviousRoundCommand}" />
             <Frame BackgroundColor="{Binding TotalStatusColor}" Padding="14" CornerRadius="0">
-                <Label HorizontalTextAlignment="Center" TextColor="White" FontSize="16" Text="{Binding CurrentRound.RoundNumber}"/>
+                <Label HorizontalTextAlignment="Center" TextColor="White" FontSize="16" Text="{Binding CurrentRound.RoundText}"/>
             </Frame>
             <Button Text="Next" Command="{Binding NextRoundCommand}" />
         </StackLayout>
@@ -19,52 +19,52 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <CollectionView Grid.Row="2" ItemsSource="{Binding CurrentRound.Scores}" >
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Label Grid.Column="0" VerticalTextAlignment="Center" BackgroundColor="{Binding NameColor}" TextColor="{Binding NameTextColor}" Text="{Binding Player.Name}"/>
-                        <Entry Keyboard="Numeric" Grid.Column="1" Text="{Binding Bet}"/>
-                        <Entry Keyboard="Numeric" BackgroundColor="{Binding ResultColor}" Grid.Column="2" Text="{Binding Result}"/>
-                    </Grid>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-        <Grid Grid.Row="1" >
+        <Grid Grid.Row="0" >
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="5"/>
             </Grid.ColumnDefinitions>
-            <Label VerticalTextAlignment="Center" Grid.Column="0" HorizontalTextAlignment="End" Text="Total"/>
-            <Entry Grid.Column="1" Text="{Binding TotalBid}" HorizontalTextAlignment="End" IsReadOnly="True"/>
-            <Entry Grid.Column="2" Text="{Binding TotalResult}" HorizontalTextAlignment="End" IsReadOnly="True"/>
+            <Label VerticalTextAlignment="Center" Grid.Column="1" Text="Bid"/>
+            <Label VerticalTextAlignment="Center" Grid.Column="2" Text="Tricks"/>
+            <Label VerticalTextAlignment="Center" Grid.Column="3" Text="Score" HorizontalOptions="End"/>
         </Grid>
-        <CollectionView Grid.Row="3" ItemsSource="{Binding PlayerViewModels}" >
+        <CollectionView Grid.Row="1" ItemsSource="{Binding CurrentRound.Scores}" >
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2*"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="5"/>
                         </Grid.ColumnDefinitions>
-                        <Entry Text="{Binding Name}" Grid.Column="0"/>
-                        <Frame Grid.Column="1" BackgroundColor="#2196F3" Padding="10" CornerRadius="0">
-                            <Label HorizontalTextAlignment="Center" TextColor="White" FontSize="16" Text="{Binding Points}" />
-                        </Frame>
+                        <Label Grid.Column="0" VerticalTextAlignment="Center" BackgroundColor="{Binding NameColor}" TextColor="{Binding NameTextColor}" Text="{Binding Player.Name}"/>
+                        <Entry Keyboard="Numeric" Grid.Column="1" Text="{Binding Bet}"/>
+                        <Entry Keyboard="Numeric" Grid.Column="2" BackgroundColor="{Binding ResultColor}" Text="{Binding Result}"/>
+                        <Label Grid.Column="3" Text="{Binding Player.Points}" HorizontalOptions="End" VerticalOptions="Center"/>
                     </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+        <Grid Grid.Row="2" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="5"/>
+            </Grid.ColumnDefinitions>
+            <Label VerticalTextAlignment="Center" Grid.Column="0" Text="Total"/>
+            <Label Grid.Column="1" Text="{Binding TotalBid}"/>
+            <Label Grid.Column="2" Text="{Binding TotalResult}"/>
+        </Grid>
     </Grid>
 </ContentPage>

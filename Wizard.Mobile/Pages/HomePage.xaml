@@ -7,18 +7,28 @@
         <viewModels:HomeViewModel x:Name="vm"/>
     </ContentPage.BindingContext>
     <NavigationPage.TitleView>
-        <Label Grid.Row="0" Text="Wizard Score Tracker"
-                VerticalOptions="CenterAndExpand" 
-                HorizontalOptions="CenterAndExpand" HeightRequest="44" WidthRequest="300"/>
+        <Label Text="Wizard Score Tracker" FontSize="24" TextColor="White" VerticalOptions="CenterAndExpand" HorizontalOptions="CenterAndExpand"/>
     </NavigationPage.TitleView>
     <ContentPage.Content>
         <Grid>
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            
-            <CollectionView Grid.Row="0" ItemsSource="{Binding Games}" SelectedItem="{Binding SelectedSummary}" SelectionMode="Single">
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Label Grid.Column="0" Text="Date"/>
+                <Label Grid.Column="1" Text="Finished"/>
+                <!--<Label Grid.Column="2" Text="Date"/>
+                <Label Grid.Column="3" Text="Date"/>-->
+            </Grid>
+            <CollectionView Grid.Row="1" ItemsSource="{Binding Games}" SelectedItem="{Binding SelectedSummary}" SelectionMode="Single">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Grid>
@@ -31,13 +41,13 @@
                             <Label Grid.Column="0" Text="{Binding LastUpdated}"/>
                             <Label Grid.Column="1" Text="{Binding IsFinished}"/>
                             <Button Grid.Column="2" Text="Open" Command="{Binding LoadCommand, Source={x:Reference vm}}" CommandParameter="{Binding Id}"/>
-                            <Button Grid.Column="3" Text="Delete" Command="{Binding DeleteCommand, Source={x:Reference vm}}" CommandParameter="{Binding Id}"/>
+                            <Button Grid.Column="3" Text="Delete" Command="{Binding DeleteCommand, Source={x:Reference vm}}" CommandParameter="{Binding Id}" BackgroundColor="#B0170E"/>
                         </Grid>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
-            <StackLayout Grid.Row="1" Orientation="Horizontal" HorizontalOptions="FillAndExpand">
+            <StackLayout Grid.Row="2" Orientation="Horizontal" HorizontalOptions="FillAndExpand">
                 <Button Text="Refresh" Command="{Binding RefreshCommand}" HorizontalOptions="FillAndExpand"/>
                 <Button Text="New Game" Command="{Binding NewGameCommand}" HorizontalOptions="FillAndExpand"/>
             </StackLayout>

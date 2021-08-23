@@ -28,7 +28,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <!--<ColumnDefinition Width="*"/>-->
                             </Grid.ColumnDefinitions>
-                            <Entry Text="{Binding }"/>
+                            <Entry Text="{Binding Name}"/>
                         </Grid>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>

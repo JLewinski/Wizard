@@ -21,15 +21,15 @@ namespace Wizard.Mobile.ViewModels
             {
                 if (Names.Count < 6)
                 {
-                    Names.Add(string.Empty);
+                    Names.Add(new NameViewModel());
                 }
             });
             ClearPlayersCommand = new Command(() => Names.Clear());
             StartCommand = new Command(async () =>
             {
-                if (Names.Count > 3)
+                if (Names.Count > 3 && Names.All(x => !string.IsNullOrWhiteSpace(x.Name)))
                 {
-                    var game = _dataService.Create(Names);
+                    var game = _dataService.Create(Names.Select(x => x.Name));
 
                     if (game != null)
                     {
@@ -50,6 +50,18 @@ namespace Wizard.Mobile.ViewModels
 
         #endregion Commands
 
-        public ObservableCollection<string> Names { get; } = new ObservableCollection<string> { string.Empty, string.Empty, string.Empty, string.Empty };
+        public ObservableCollection<NameViewModel> Names { get; } = new ObservableCollection<NameViewModel>
+        {
+            new NameViewModel(),
+            new NameViewModel(),
+            new NameViewModel(),
+            new NameViewModel()
+        };
+    }
+
+    public class NameViewModel : BindableBase
+    {
+        private string name = string.Empty;
+        public string Name { get => name; set => SetProperty(ref name, value); }
     }
 }

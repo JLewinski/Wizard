@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Wizard.Models;
 
 namespace Wizard.Services
@@ -87,7 +85,7 @@ namespace Wizard.Services
             return false;
         }
 
-        public bool Save(IGame vm) => Save(vm.ToPoco());
+        public bool Save(IPoco<Game> vm) => Save(vm.ToPoco());
 
         public Game GetGame(int id)
         {

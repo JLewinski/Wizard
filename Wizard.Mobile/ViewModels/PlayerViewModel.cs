@@ -4,7 +4,7 @@ using Wizard.Models;
 
 namespace Wizard.Mobile.ViewModels
 {
-    public class PlayerViewModel : BindableBase, IPlayer
+    public class PlayerViewModel : BindableBase, IPoco<Player>
     {
         private readonly GameViewModel _game;
 
@@ -13,7 +13,7 @@ namespace Wizard.Mobile.ViewModels
         {
             _name = other.Name;
             _game = game;
-            RoundViewModels = other.Rounds.Select(x => new RoundResultViewModel(this, game, x)).ToList();
+            RoundViewModels = other.Rounds.Select(poco => new RoundResultViewModel(this, game, poco)).ToList();
         }
 
         public void AddRound()
@@ -26,7 +26,7 @@ namespace Wizard.Mobile.ViewModels
             RaisePropertyChanged(nameof(Points));
         }
 
-        public int Points => RoundViewModels.Sum(x => x.Bet == x.Result ? 20 + (x.Result * 10) : System.Math.Abs(x.Bet - x.Result) * -10);
+        public int Points => RoundViewModels.Where(x => x.IsCompleted).Sum(x => x.Bet == x.Result ? 20 + (x.Result * 10) : System.Math.Abs(x.Bet - x.Result) * -10);
 
         private string _name;
         public string Name { get => _name; set => SetProperty(ref _name, value); }

@@ -14,12 +14,17 @@ namespace Wizard.Mobile.ViewModels
             result = poco.Result;
             isDealer = poco.IsDealer;
 
+            IsCompleted = true;
+
             _game = game;
         }
 
         public RoundResultViewModel(PlayerViewModel player, GameViewModel game)
         {
             Player = player;
+
+            IsCompleted = false;
+
             _game = game;
         }
 
@@ -29,12 +34,27 @@ namespace Wizard.Mobile.ViewModels
 
         public Color NameTextColor => isDealer ? Color.White : Color.Default;
 
-        public Color ResultColor => !_game.CanGoNextRound ? Color.Default : bet == result ? ColorHelper.SUCCESS_GREEN : ColorHelper.DANGER_RED;
+        public Color ResultColor => !_game.CurrentRound.IsCompleted ? Color.Default : bet == result ? ColorHelper.SUCCESS_GREEN : ColorHelper.DANGER_RED;
 
         public void UpdateView()
         {
             RaisePropertyChanged(nameof(ResultColor));
             Player.UpdatePoints();
+        }
+
+        private bool isCompleted;
+        public bool IsCompleted
+        {
+            get => isCompleted;
+            set
+            {
+                if (isCompleted != value)
+                {
+                    isCompleted = value;
+                    Player.UpdatePoints();
+                    RaisePropertyChanged(nameof(ResultColor));
+                }
+            }
         }
 
         #endregion View Properties
@@ -50,7 +70,7 @@ namespace Wizard.Mobile.ViewModels
             {
                 if (SetProperty(ref bet, value))
                 {
-                    _game?.UpdateTotalBets();
+                    _game?.UpdateAll();
                 }
             }
         }
@@ -62,7 +82,7 @@ namespace Wizard.Mobile.ViewModels
             {
                 if (SetProperty(ref result, value))
                 {
-                    _game?.UpdateTotalResults();
+                    _game?.UpdateAll();
                 }
             }
         }
@@ -73,7 +93,7 @@ namespace Wizard.Mobile.ViewModels
             get => isDealer;
             set
             {
-                if(SetProperty(ref isDealer, value))
+                if (SetProperty(ref isDealer, value))
                 {
                     RaisePropertyChanged(nameof(NameColor));
                 }
@@ -83,7 +103,7 @@ namespace Wizard.Mobile.ViewModels
         public RoundResult ToPoco() => new RoundResult
         {
             Bet = Bet,
-            IsDealer= IsDealer,
+            IsDealer = IsDealer,
             Result = Result
         };
 

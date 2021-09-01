@@ -6,7 +6,11 @@ namespace Wizard.Models
 {
     public class Game
     {
-        public Game() { }
+        public Game()
+        {
+            Players = new List<Player>();
+             Suits = new List<Suit>();
+        }
 
         public Game(int id, string name, IEnumerable<IPlayer> players, List<Suit> suits)
         {
@@ -22,16 +26,8 @@ namespace Wizard.Models
 
         public List<Player> Players { get; set; }
 
-        public List<Suit> Suits { get; set; } = new List<Suit>();
+        public List<Suit> Suits { get; set; }
 
         public DateTime LastUpdated { get; set; }
-    }
-
-    public class Player
-    {
-        public Player() { }
-
-        public string Name { get; set; }
-        public List<RoundResult> Rounds { get; set; } = new List<RoundResult>();
     }
 }

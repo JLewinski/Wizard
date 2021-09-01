@@ -62,8 +62,8 @@
                 <ColumnDefinition Width="5"/>
             </Grid.ColumnDefinitions>
             <Label VerticalTextAlignment="Center" Grid.Column="0" Text="Total"/>
-            <Label Grid.Column="1" Text="{Binding TotalBid}" HorizontalOptions="End"/>
-            <Label Grid.Column="2" Text="{Binding TotalResult}" HorizontalOptions="End"/>
+            <Label Grid.Column="1" Text="{Binding CurrentRound.TotalBet}" HorizontalOptions="End"/>
+            <Label Grid.Column="2" Text="{Binding CurrentRound.TotalResult}" HorizontalOptions="End"/>
         </Grid>
     </Grid>
 </ContentPage>

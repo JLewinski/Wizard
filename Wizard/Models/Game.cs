@@ -28,6 +28,8 @@ namespace Wizard.Models
 
         public List<Suit> Suits { get; set; }
 
+        public DateTime DateCreated { get; set; } = DateTime.Now;
+
         public DateTime LastUpdated { get; set; }
     }
 }

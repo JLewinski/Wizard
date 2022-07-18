@@ -42,7 +42,7 @@ namespace Wizard.Services
             var gameCollection = db.GetCollection<Game>(nameof(Game));
             var summaryCollection = db.GetCollection<GameSummary>(nameof(GameSummary));
 
-            var summary = new GameSummary(game.Id, game.Name, game.LastUpdated, false);
+            var summary = new GameSummary(game.Id, game.Name, game.DateCreated, game.LastUpdated, false);
 
             var inserted = gameCollection.Insert(game);
             if (inserted > 0)
@@ -72,7 +72,7 @@ namespace Wizard.Services
             var summaryCollection = db.GetCollection<GameSummary>(nameof(GameSummary));
             var totalRounds = 60 / game.Players.Count;
             var isFinished = game.Players.First().Rounds.Count == totalRounds && game.Players.Sum(x => x.Rounds.Last().Result) == totalRounds;
-            var summary = new GameSummary(game.Id, game.Name, game.LastUpdated, isFinished);
+            var summary = new GameSummary(game.Id, game.Name, game.DateCreated, game.LastUpdated, isFinished);
 
             if (gameCollection.Update(game))
             {

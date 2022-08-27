@@ -27,8 +27,10 @@ namespace Wizard.Extensions
             };
         }
 
-        public static Player ToPoco(this IPlayer player){
-            return new Player{
+        public static Player ToPoco(this IPlayer player)
+        {
+            return new Player
+            {
                 Name = player.Name,
                 Rounds = player.Rounds
             };

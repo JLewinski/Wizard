@@ -18,7 +18,8 @@ namespace Wizard.Models
 
         public void AddRound()
         {
-            _rounds.Add(new RoundResult());
+            var roundNumber = _rounds.Max(x => x.RoundNumber) + 1;
+            _rounds.Add(new RoundResult{ RoundNumber = roundNumber });
         }
     }
 }

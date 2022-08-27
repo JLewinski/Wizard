@@ -18,10 +18,13 @@ namespace Wizard.Extensions
                     save = false;
                     errors.Add("results != round number");
                 }
-
-                foreach (var player in game.Players.Where(x => x.Rounds.Count() <= roundNumber))
+                if (roundNumber == game.Players.Max(x => x.Rounds.Max(y => y.RoundNumber)))
                 {
-                    player.AddRound();
+                    roundNumber++;
+                    foreach (var player in game.Players.Where(x => x.Rounds.Count() <= roundNumber))
+                    {
+                        player.AddRound();
+                    }
                 }
             }
             else

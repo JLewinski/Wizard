@@ -7,6 +7,6 @@ namespace Wizard.Models
         string Name { get; }
         public IEnumerable<IRoundResult> Rounds { get; }
 
-        // public Player ToPoco();
+        public void AddRound();
     }
 }

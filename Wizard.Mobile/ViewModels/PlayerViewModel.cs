@@ -39,11 +39,5 @@ namespace Wizard.Mobile.ViewModels
             get => _rounds;
             set => SetProperty(ref _rounds, value);
         }
-
-        public Player ToPoco() => new Player
-        {
-            Name = _name,
-            Rounds = Rounds.Select(x => x.ToPoco()).ToList()
-        };
     }
 }

@@ -15,5 +15,10 @@ namespace Wizard.Models
             get => _rounds;
             set => _rounds = value.Select(x => x.ToPoco()).ToList();
         }
+
+        public void AddRound()
+        {
+            _rounds.Add(new RoundResult());
+        }
     }
 }

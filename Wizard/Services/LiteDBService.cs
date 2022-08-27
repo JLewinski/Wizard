@@ -1,14 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Wizard.Extensions;
 using Wizard.Models;
 
 namespace Wizard.Services
 {
-    public class DataService
+    public class LiteDBService : IDataService
     {
         private readonly string _connectionString;
 
-        public DataService(string connectionString)
+        public LiteDBService(string connectionString)
         {
             _connectionString = connectionString;
         }
@@ -21,22 +23,20 @@ namespace Wizard.Services
             return collection.Query().ToList();
         }
 
+        public Task<List<Game>> GetGamesAsync() => Task.Run(() => GetGames());
+
         //TODO: Use paging
-        public List<GameSummary> GetSummary()
+        public List<GameSummary> GetSummaries()
         {
             using var db = new LiteDB.LiteDatabase(_connectionString);
             var collection = db.GetCollection<GameSummary>(nameof(GameSummary));
             return collection.Query().ToList().OrderByDescending(x => x.LastUpdated).ToList();
         }
 
-        public Game Create(IEnumerable<string> playerNames)
-        {
-            var game = new Game
-            {
-                Players = playerNames.Select(x => new Player { Name = x }).ToList(),
-                LastUpdated = System.DateTime.Now
-            };
+        public Task<List<GameSummary>> GetSummariesAsync() => Task.Run(() => GetSummaries());
 
+        public Game Create(Game game)
+        {
             using var db = new LiteDB.LiteDatabase(_connectionString);
 
             var gameCollection = db.GetCollection<Game>(nameof(Game));
@@ -62,6 +62,8 @@ namespace Wizard.Services
             return null;
         }
 
+        public Task<Game> CreateAsync(Game game) => Task.Run(() => Create(game));
+
         public bool Save(Game game)
         {
             game.LastUpdated = System.DateTime.Now;
@@ -71,7 +73,7 @@ namespace Wizard.Services
             var gameCollection = db.GetCollection<Game>(nameof(Game));
             var summaryCollection = db.GetCollection<GameSummary>(nameof(GameSummary));
             var totalRounds = 60 / game.Players.Count;
-            var isFinished = game.Players.First().Rounds.Count == totalRounds && game.Players.Sum(x => x.Rounds.Last().Result) == totalRounds;
+            var isFinished = game.Players.First().Rounds.Count() == totalRounds && game.Players.Sum(x => x.Rounds.Last().Result) == totalRounds;
             var summary = new GameSummary(game.Id, game.Name, game.DateCreated, game.LastUpdated, isFinished);
 
             if (gameCollection.Update(game))
@@ -85,7 +87,9 @@ namespace Wizard.Services
             return false;
         }
 
-        public bool Save(IPoco<Game> vm) => Save(vm.ToPoco());
+        public bool Save(IGame vm) => Save(vm.ToPoco());
+
+        public Task<bool> SaveAsync(IGame vm) => Task.Run(() => Save(vm));
 
         public Game GetGame(int id)
         {
@@ -94,7 +98,9 @@ namespace Wizard.Services
             return collection.Find(x => x.Id == id).FirstOrDefault();
         }
 
-        public bool Delete(int id)
+        public Task<Game> GetGameAsync(int id) => Task.Run(() => GetGame(id));
+
+        public bool DeleteGame(int id)
         {
             using var db = new LiteDB.LiteDatabase(_connectionString);
             var gameCollection = db.GetCollection<Game>(nameof(Game));
@@ -102,5 +108,7 @@ namespace Wizard.Services
 
             return gameCollection.Delete(id) && summaryCollection.Delete(id);
         }
+
+        public Task<bool> DeleteGameAsync(int id) => Task.Run(() => DeleteGame(id));
     }
 }

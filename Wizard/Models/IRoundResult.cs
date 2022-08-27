@@ -6,10 +6,10 @@
         int Result { get; set; }
         bool IsDealer { get; set; }
 
-        RoundResult ToPoco();
+        // RoundResult ToPoco();
     }
 
-    public class RoundResult
+    public class RoundResult : IRoundResult
     {
         public RoundResult() { }
 
